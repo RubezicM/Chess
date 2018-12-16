@@ -20,6 +20,12 @@ td {
     bottom: 5px;
     right: 5px;
 }
+.field-convert {
+    position: absolute;
+    font-size: 12px;
+    bottom: 5px;
+    left: 5px;
+}
 
 td,
 th {

@@ -4,7 +4,27 @@ var selectedPiece = "",
   gameStarted = false,
   numberOfMoves = 0,
   selectedField;
+  // Move constructor
 
+  function Move(id){
+    this.id = id;
+    this.color = table[id].color;
+    this.piece = table[id].piece;
+  }
+  let firstSelection,
+      secondSelection;
+  // var kme = {
+  //   firstSelection: {
+  //     id: "", // id number
+  //     color: "",
+  //     piece: ""
+  //   },
+  //   secondSelection: {
+  //     id: "", // id number
+  //     color: "",
+  //     piece: ""
+  //   }
+  // };
 
 function nacrtajTabelu() {
   var html = '<table id="sahTabla">';
@@ -18,9 +38,9 @@ function nacrtajTabelu() {
       var piece = table[i].piece;
       html += `<td id="polje_${i}">${
         pieces[piece][color]
-      }<span class="field-id">${fieldIndex}</span></td>`; // {  "color": "black",   "piece": "rook" }
+      }<span class="field-convert">${fieldIndex}</span><span class="field-id">ID: ${i}</span></td>`; // {  "color": "black",   "piece": "rook" }
     } else {
-      html += `<td id="polje_${i}"><span class="field-id">${fieldIndex}</span></td>`;
+      html += `<td id="polje_${i}"><span class="field-convert">${fieldIndex}</span><span class="field-id">ID: ${i}</span></td>`;
     }
     if (i % 8 == 7) {
       html += "</tr>\n\n";
@@ -35,20 +55,20 @@ nacrtajTabelu();
 document.getElementById("table").addEventListener("click", function(event) {
   var field = event.target;
   var id = field.id.slice(6);
-  
+
   if (selectedPiece == "") {
     if (!table[id].color) {
       return false;
     }
-    selectedPiece = id;
+    selectedPiece = Number(id);
     selectedField = table[selectedPiece];
     selectedField.id = id;
     console.log(selectedField);
-    
-    
   } else {
     plannedMove = id;
     if (isValidMove(selectedPiece, plannedMove)) {
+      console.log("pomeraj");
+
       table[plannedMove] = table[selectedPiece];
       table[selectedPiece] = {};
       selectedPiece = "";
@@ -66,12 +86,12 @@ document.getElementById("table").addEventListener("click", function(event) {
 function isValidMove(firstSelection, secondSelection) {
   var move = {
     firstSelection: {
-      id: firstSelection, // id number
+      id: Number(firstSelection), // id number
       color: table[firstSelection].color,
       piece: table[firstSelection].piece
     },
     secondSelection: {
-      id: secondSelection, // id number
+      id: Number(secondSelection), // id number
       color: table[secondSelection].color,
       piece: table[secondSelection].piece
     }
@@ -119,7 +139,7 @@ function isValidMoveRook(firstSelection, secondSelection) {
   return field1[0] == field2[0] || field1[1] == field2[1];
 }
 // function showPossibleMoves("rook"){
-  
+
 // }
 
 function isValidMoveBishop(firstSelection, secondSelection) {
@@ -154,39 +174,74 @@ function getSurroundingFields(type) {
 }
 
 function isValidMovePawn(firstSelection, secondSelection) {
-  console.log(firstSelection, secondSelection);
-  var field1 = convertField(firstSelection.id);
-  var field2 = convertField(secondSelection.id);
+  // console.log(firstSelection, secondSelection);
+  // var field1 = convertField(firstSelection.id);
+  // var field2 = convertField(secondSelection.id);
+  var posibleMoves = {
+    white: {
+      canMove: firstSelection.id - 8,
+      canEat: [firstSelection.id - 9, firstSelection.id - 7]
+    },
+    black: {
+      canMove: firstSelection.id + 8,
+      canEat: [firstSelection.id + 9, firstSelection.id + 7]
+    }
+  };
+  var canEat = posibleMoves[playerTurn]["canEat"].indexOf(secondSelection.id) >= 0;
+  // console.log("Eat : ", eat);
 
-  // TO-DO first move condition - can go 2 fields
   // Eating condition
-  console.log("field1:", field1, "field2:", field2);
-  console.log(secondSelection.id);
+  //console.log("field1:", field1, "field2:", field2);
+  console.log(
+    "firstSelection.id: ",
+    firstSelection.id,
+    "\n",
+    "secondSelection.id: ",
+    secondSelection.id,
+    "\n",
+    "posibleMoves -- id",
+    posibleMoves[playerTurn]["canMove"],
+    "\n",
+    "canEat array :",
+    posibleMoves[playerTurn]["canEat"]
+  );
+  console.log(secondSelection.color == playerTurn);
 
-  if (secondSelection.piece != undefined) {
-    return false;
+  if (
+    (secondSelection.id == posibleMoves[playerTurn]["canMove"] 
+    &&
+      secondSelection.piece == undefined) 
+      ||
+    (secondSelection.piece != undefined && canEat)
+  ) {
+    return true;
+  } else if (secondSelection.id) {
+    console.log(`Figurica ispred`);
   }
-  if (numberOfMoves < 2) {
-    if (firstSelection.color == "white") {
-      return (
-        (field1[0] - 1 == field2[0] || field1[0] - 2 == field2[0]) &&
-        field1[1] == field2[1]
-      );
-    } else {
-      return (
-        (field1[0] + 1 == field2[0] || field1[0] + 2 == field2[0]) &&
-        field1[1] == field2[1]
-      );
-    }
-  } else {
-    if (firstSelection.color == "white") {
-      return field1[0] - 1 == field2[0] && field1[1] == field2[1];
-    } else {
-      // selection color black
-      return field1[0] + 1 == field2[0] && field1[1] == field2[1];
-    }
-  }
+
+  // if (numberOfMoves < 2) {
+  //   if (firstSelection.color == "white") {
+  //     return (
+  //       (field1[0] - 1 == field2[0] || field1[0] - 2 == field2[0]) &&
+  //       field1[1] == field2[1]
+  //     );
+  //   } else {
+  //     return (
+  //       (field1[0] + 1 == field2[0] || field1[0] + 2 == field2[0]) &&
+  //       field1[1] == field2[1]
+  //     );
+  //   }
+  // } else {
+  //   if (firstSelection.color == "white") {
+  //     return field1[0] - 1 == field2[0] && field1[1] == field2[1];
+  //   } else {
+  //     // selection color black
+  //     return field1[0] + 1 == field2[0] && field1[1] == field2[1];
+  //   }
+  // }
 }
+function calculatePosibleMoves() {}
+
 function isValidMoveQueen(firstSelection, secondSelection) {
   console.log(firstSelection, secondSelection);
   var field1 = convertField(firstSelection.id);
