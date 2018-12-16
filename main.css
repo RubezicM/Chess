@@ -3,14 +3,23 @@
 }
 
 table {
-    border-collapse: collapse
-}
+    border-collapse: collapse;
 
+}
+#gameContainer {
+    display: inline-block;
+}
+#moves {
+    width: 100%;
+    display: block;
+    margin: 0 auto;
+    height: 50px;
+    text-align: center;
+}
 table,
 tr,
 td {
     padding: 0;
-    margin: 0;
     text-align: center;
     position: relative;
 }
@@ -32,10 +41,12 @@ th {
     border: solid black 1px;
     width: 100px;
     height: 100px;
-    font-size: 50px;
+    font-size: 40px;
     line-height: 1;
 }
-
+td:hover {
+    cursor: pointer;
+}
 th {
     font-size: 20px;
     vertical-align: middle;
