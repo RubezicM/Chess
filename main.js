@@ -32,13 +32,51 @@ function getAvailableMoves(ref, type) {
       ];
     }
   }
-  if(type == "rook"){
-    var posibleCoords = getRookMovement();
-    return field1[0] == field2[0] || field1[1] == field2[1];
+  if (type == "rook") {
+    return getRookMovement(ref);
+
+    // return field1[0] == field2[0] || field1[1] == field2[1];
   }
 }
-function getRookMovement(){
+function getRookMovement(obj) {
+  let coordArr = obj.fieldCoordinates,
+    x = coordArr[0],
+    y = coordArr[1],
+    tmpArr = [];
+  for (var i = 0; i < 8; i++) {
+      if(i == x){
+        console.log('same',i,x);
+        continue;
+      }
+      tmpArr.push([i,y]);
+  }
+  for(var z=0;z < 8;z++){
+      if(z == y){
+        console.log('same',z,y);
+        continue;
+      }
+      tmpArr.push([x,z]);
+  }
   
+  
+
+  console.log(tmpArr);
+
+  return tmpArr;
+}
+function checkForOtherFigure(xy) {
+  console.log(xy);
+
+  tmpArr = [];
+  for (var i = 0; i < xy.length; i++) {
+    var id = convertCoordsToIds(xy[i]);
+    if (table[id] != undefined) {
+      break;
+    } else {
+      tmpArr.push(id);
+    }
+  }
+  return tmpArr;
 }
 
 // Move constructor
@@ -56,34 +94,33 @@ Figure.prototype.getFieldCoords = function() {
 };
 Figure.prototype.storePossibleMoves = function() {
   let availableMoves = getAvailableMoves(this, this.piece),
-      piece = this.piece;
+    piece = this.piece;
   availableMoves.forEach(function(coord) {
     var currentCoord = convertCoordsToIds(coord);
     if (currentCoord != undefined) {
-      if(piece == "pawn"){ // Special case for pawn when eating and such
+      if (piece == "pawn") {
+        // Special case for pawn when eating and such
         // To - Do : Add two steps when the player has the first move
-        if(firstSelection.fieldCoordinates[1] == coord[1]){
+        if (firstSelection.fieldCoordinates[1] == coord[1]) {
           firstSelection.canMove.push(currentCoord);
         } else {
           firstSelection.canEat.push(currentCoord);
         }
-        
-      } else { // All other "normal" pieces
+      } else {
+        // All other "normal" pieces
         if (table[currentCoord].piece == undefined) {
           firstSelection.canMove.push(currentCoord);
         } else {
           firstSelection.canEat.push(currentCoord);
         }
       }
-      
     }
   });
 };
 
-
 let firstSelection, secondSelection;
 
-function nacrtajTabelu() {
+function chessTableDraw() {
   let html = '<table id="sahTabla">';
   for (let i = 0; i < table.length; i++) {
     let fieldIndex = convertField(i);
@@ -107,62 +144,69 @@ function nacrtajTabelu() {
   document.getElementById("chessTable").innerHTML = html;
 }
 
-nacrtajTabelu();
+chessTableDraw();
 function updateCurrentSel(id) {
-  nacrtajTabelu();
+  chessTableDraw();
   firstSelection = new Figure(id); // first selection init
   firstSelection.storePossibleMoves();
   updateUi();
 }
 
-document.getElementById("gameContainer").addEventListener("click", function(event) {
+document
+  .getElementById("gameContainer")
+  .addEventListener("click", function(event) {
+    console.log("click");
 
-  // To - Do : Make a custom function
-  let field = event.target;
-  let id = field.id.slice(6);
+    // To - Do : Make a custom function
+    let field = event.target;
+    let id = field.id.slice(6);
 
-  if (selectedPiece == "") {
-    if (!table[id].color || table[id].color != playerTurn) {
-      return false;
-    }
-    selectedPiece = Number(id);
-    updateCurrentSel(selectedPiece);
-  } else {
-    if (table[id].color == firstSelection.color) {
+    if (selectedPiece == "") {
+      if (!table[id].color || table[id].color != playerTurn) {
+        return false;
+      }
       selectedPiece = Number(id);
       updateCurrentSel(selectedPiece);
-      return false;
-    }
-    plannedMove = Number(id);
-    secondSelection = new Figure(plannedMove); // 2nd field init
-    if (isValidMove(firstSelection, secondSelection)) { // check for valid move then making a switch.
-
-      moveFigure(selectedPiece,plannedMove);
+      console.log(firstSelection);
     } else {
-      selectedPiece = "";
-      console.log('Invalid move');
-      delete firstSelection;
-      delete secondSelection;
-      nacrtajTabelu()
+      if (table[id].color == firstSelection.color) {
+        selectedPiece = Number(id);
+        updateCurrentSel(selectedPiece);
+        console.log(firstSelection);
+        return false;
+      }
+
+      plannedMove = Number(id);
+      secondSelection = new Figure(plannedMove); // 2nd field init
+      console.log(secondSelection);
+
+      if (isValidMove(firstSelection, secondSelection)) {
+        // check for valid move then making a switch.
+
+        moveFigure(selectedPiece, plannedMove);
+      } else {
+        selectedPiece = "";
+        console.log("Invalid move");
+        delete firstSelection;
+        delete secondSelection;
+        chessTableDraw();
+      }
     }
-  }
-  //nacrtajTabelu();
-  if (selectedPiece != "")
-    document.getElementById("field_" + id).style.background = "pink";
-});
-function moveFigure(first,second){
+    //chessTableDraw();
+    if (selectedPiece != "")
+      document.getElementById("field_" + id).style.background = "pink";
+  });
+function moveFigure(first, second) {
   table[second] = table[first];
-      table[first] = {};
-      selectedPiece = "";
-      playerTurn = playerTurn == "white" ? "black" : "white";
-      numberOfMoves++;
-      nacrtajTabelu();
-      console.log('field Changed');
-      
+  table[first] = {};
+  selectedPiece = "";
+  playerTurn = playerTurn == "white" ? "black" : "white";
+  numberOfMoves++;
+  chessTableDraw();
+  console.log("field Changed");
 }
 
 function isValidMove(firstField, secondField) {
-
   console.log(
     "First Selection: ",
     firstField,
@@ -203,12 +247,8 @@ function isValidMoveRook(firstSelection, secondSelection) {
   let field1 = convertField(firstSelection.id);
   let field2 = convertField(secondSelection.id);
   console.log("field1:", field1, "field2:", field2);
-  showPossibleMoves();
   return field1[0] == field2[0] || field1[1] == field2[1];
 }
-// function showPossibleMoves("rook"){
-
-// }
 
 function isValidMoveBishop(firstSelection, secondSelection) {
   console.log(firstSelection, secondSelection);
@@ -222,8 +262,8 @@ function isValidMoveBishop(firstSelection, secondSelection) {
 }
 function isValidMoveKnight(firstSelection, secondSelection) {
   let canMove = firstSelection["canMove"].indexOf(secondSelection.id) >= 0,
-  canEat = firstSelection["canEat"].indexOf(secondSelection.id) >= 0;
-  if(canMove || canEat){
+    canEat = firstSelection["canEat"].indexOf(secondSelection.id) >= 0;
+  if (canMove || canEat) {
     return true;
   } else {
     return false;
@@ -233,12 +273,11 @@ function convertCoordsToIds(coords) {
   let id = "xy_" + coords;
   if (document.getElementById(id) != undefined) {
     return Number(document.getElementById(id).parentElement.id.slice(6));
-  } else {
   }
 }
 function isValidMovePawn(firstSelection, secondSelection) {
   let canEat = firstSelection["canEat"].indexOf(secondSelection.id) >= 0,
-      canMove = firstSelection["canMove"].indexOf(secondSelection.id) == 0;
+    canMove = firstSelection["canMove"].indexOf(secondSelection.id) == 0;
   if (
     (canMove && secondSelection.piece == undefined) ||
     (secondSelection.piece != undefined && canEat)
@@ -248,7 +287,6 @@ function isValidMovePawn(firstSelection, secondSelection) {
     console.log(`Figurica ispred`);
   }
 }
-
 
 function isValidMoveQueen(firstSelection, secondSelection) {
   console.log(firstSelection, secondSelection);
