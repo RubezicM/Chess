@@ -4,50 +4,37 @@ let selectedPiece = "",
   gameStarted = false,
   numberOfMoves = 0;
 
-function getAvailableMoves(ref, type) {
+function calcMoves(ref, type) {
   if (type == "knight") {
-    // return [
-    //   [ref.fieldCoordinates[0] + 2, ref.fieldCoordinates[1] + 1],
-    //   [ref.fieldCoordinates[0] + 2, ref.fieldCoordinates[1] - 1],
-    //   [ref.fieldCoordinates[0] - 2, ref.fieldCoordinates[1] - 1],
-    //   [ref.fieldCoordinates[0] - 2, ref.fieldCoordinates[1] + 1],
-    //   [ref.fieldCoordinates[0] - 1, ref.fieldCoordinates[1] - 2],
-    //   [ref.fieldCoordinates[0] - 1, ref.fieldCoordinates[1] + 2],
-    //   [ref.fieldCoordinates[0] + 1, ref.fieldCoordinates[1] + 2],
-    //   [ref.fieldCoordinates[0] + 1, ref.fieldCoordinates[1] - 2]
-    // ];
     return getKnightMovements(ref);
   }
   if (type == "pawn") {
     return getPawnMovements(ref);
   }
   if (type == "rook") {
-    return getRookMovement(ref);
+    return getRookMovements(ref);
   }
 }
-function getRookMovement(obj) {
+function getRookMovements(obj) {
   let coordArr = obj.fieldCoordinates,
     x = coordArr[0],
     y = coordArr[1],
     tmpArr = [];
-  //("coordinate,fn rookmovement : ", coordArr);
-
   for (var i = 0; i < 8; i++) {
     if (i == x) {
-      //("same", i, x);
+
       continue;
     }
     tmpArr.push([i, y]);
   }
   for (var z = 0; z < 8; z++) {
     if (z == y) {
-      //("same", z, y);
       continue;
     }
     tmpArr.push([x, z]);
   }
 
-  let movements = getPosibleMovements(coordArr, tmpArr);
+  let movements = getAllPossibleFields(coordArr, tmpArr);
 
   return checkForObstacles(movements);
 }
@@ -56,14 +43,6 @@ function getKnightMovements(obj) {
     x = coordArr[0],
     y = coordArr[1],
     tmpArr = [];
-  //   [ref.fieldCoordinates[0] + 2, ref.fieldCoordinates[1] + 1],
-  //   [ref.fieldCoordinates[0] + 2, ref.fieldCoordinates[1] - 1],
-  //   [ref.fieldCoordinates[0] + 1, ref.fieldCoordinates[1] + 2],
-  //   [ref.fieldCoordinates[0] + 1, ref.fieldCoordinates[1] - 2]
-  //   [ref.fieldCoordinates[0] - 1, ref.fieldCoordinates[1] - 2],
-  //   [ref.fieldCoordinates[0] - 1, ref.fieldCoordinates[1] + 2],
-  //   [ref.fieldCoordinates[0] - 2, ref.fieldCoordinates[1] + 1],
-  //   [ref.fieldCoordinates[0] - 2, ref.fieldCoordinates[1] - 1],
   for (var i = x + 1, b = 0; i < x + 3; i++, b++) {
     tmpArr.push([i, y - 2 + b]);
     tmpArr.push([i, y + 2 - b]);
@@ -75,7 +54,7 @@ function getKnightMovements(obj) {
     // g == x - 1
     // g == x - 2
   }
-  let movements = getPosibleMovements(coordArr, tmpArr);
+  let movements = getAllPossibleFields(coordArr, tmpArr);
   console.log(movements);
   return checkForObstacles(movements);
 }
@@ -98,7 +77,7 @@ function getPawnMovements(obj) {
       tmpArr.push([x + 1, k]);
     }
   }
-  let movements = getPosibleMovements(coordArr, tmpArr);
+  let movements = getAllPossibleFields(coordArr, tmpArr);
   //(movements);
   for (const key in movements) {
     if (movements.hasOwnProperty(key) && movements[key].length != 0) {
@@ -126,7 +105,7 @@ function getPawnMovements(obj) {
   return retObj;
 }
 
-function getPosibleMovements(currentcoords, arrOfposibleCoords) {
+function getAllPossibleFields(currentcoords, arrOfposibleCoords) {
   let xLeft,
     xRight,
     yTop,
@@ -183,25 +162,6 @@ function getPosibleMovements(currentcoords, arrOfposibleCoords) {
   yDBottomRight.sort(function(a, b) {
     return b[0] - a[0];
   });
-  // //(
-  //   "xleft sorted : ",
-  //   xLeft,
-  //   "\n",
-  //   "xRight sorted: ",
-  //   xRight,
-  //   "\n",
-  //   "yTop sorted: ",
-  //   yTop,
-  //   "\n",
-  //   "yBottom sorted: ",
-  //   yBottom,
-  //   "\n",
-  //   "yDTopLeft sorted: ",
-  //   yDTopLeft,
-  //   "\n",
-  //   "yDtopRight sorted: ",
-  //   yDTopRight
-  // );
   return {
     xLeft,
     xRight,
@@ -260,36 +220,12 @@ Figure.prototype.getFieldCoords = function() {
   return [Math.floor(this.id / 8), this.id % 8];
 };
 Figure.prototype.storePossibleMoves = function() {
-  let availableMoves = getAvailableMoves(this, this.piece),
-    piece = this.piece;
-  ////(piece,availableMoves,this.canEat,this.canMove);
+  let availableMoves = calcMoves(this, this.piece)
   this.canMove = availableMoves.canMove;
   this.canEat = availableMoves.canEat;
-  //(piece,availableMoves,this.canEat,this.canMove);
-  //   availableMoves.forEach(function(coord) {
-  //     var currentCoord = convertCoordsToIds(coord);
-  //     if (currentCoord != undefined) {
-  //       if (piece == "pawn") {
-  //         // Special case for pawn when eating and such
-  //         // To - Do : Add two steps when the player has the first move
-  //         if (firstSelection.fieldCoordinates[1] == coord[1]) {
-  //           firstSelection.canMove.push(currentCoord);
-  //         } else {
-  //           firstSelection.canEat.push(currentCoord);
-  //         }
-  //       } else {
-  //         // All other "normal" pieces
-  //         if (table[currentCoord].piece == undefined) {
-  //           firstSelection.canMove.push(currentCoord);
-  //         } else {
-  //           firstSelection.canEat.push(currentCoord);
-  //         }
-  //       }
-  //     }
-  //   });
 };
 
-let firstSelection, secondSelection;
+let firstSelection, secondSelection; // selection figures init
 
 function chessTableDraw() {
   let html = '<table id="sahTabla">';
@@ -315,7 +251,8 @@ function chessTableDraw() {
   document.getElementById("chessTable").innerHTML = html;
 }
 
-chessTableDraw();
+chessTableDraw(); // game init
+
 function updateCurrentSel(id) {
   chessTableDraw();
   firstSelection = new Figure(id); // first selection init
@@ -347,7 +284,6 @@ document
 
         return false;
       }
-      //('kme');
 
       plannedMove = Number(id);
       secondSelection = new Figure(plannedMove); // 2nd field init
@@ -362,27 +298,26 @@ document
       if (isValidMove(firstSelection, secondSelection)) {
         // check for valid move then making a switch.
 
-        moveFigure(selectedPiece, plannedMove);
+        swapPlaces(selectedPiece, plannedMove);
       } else {
         selectedPiece = "";
-        //("Invalid move");
+
         delete firstSelection;
         delete secondSelection;
         chessTableDraw();
       }
     }
-    //chessTableDraw();
+
     if (selectedPiece != "")
       document.getElementById("field_" + id).style.background = "pink";
   });
-function moveFigure(first, second) {
+function swapPlaces(first, second) {
   table[second] = table[first];
   table[first] = {};
   selectedPiece = "";
   playerTurn = playerTurn == "white" ? "black" : "white";
   numberOfMoves++;
   chessTableDraw();
-  //("field Changed");
 }
 
 function isValidMove(firstField, secondField) {
@@ -409,33 +344,13 @@ function moveValidation(firstSelection, secondSelection) {
     }
   } else {
     if (canMove || canEat) {
-        //('moze');
         return true;
       } else {
-        //('ne moze');
-    
         return false;
       }
   }
   
 }
-
-function isValidMoveRook(firstSelection, secondSelection) {
-  //(firstSelection.piece);
-
-  let canMove = firstSelection["canMove"].indexOf(secondSelection.id) >= 0,
-    canEat = firstSelection["canEat"].indexOf(secondSelection.id) >= 0;
-
-  if (canMove || canEat) {
-    //('moze');
-    return true;
-  } else {
-    //('ne moze');
-
-    return false;
-  }
-}
-
 function isValidMoveBishop(firstSelection, secondSelection) {
   let field1 = convertField(firstSelection.id);
   let field2 = convertField(secondSelection.id);
@@ -445,34 +360,13 @@ function isValidMoveBishop(firstSelection, secondSelection) {
     field1[0] - field2[0] == field2[1] - field1[1]
   );
 }
-function isValidMoveKnight(firstSelection, secondSelection) {
-  let canMove = firstSelection["canMove"].indexOf(secondSelection.id) >= 0,
-    canEat = firstSelection["canEat"].indexOf(secondSelection.id) >= 0;
-  if (canMove || canEat) {
-    return true;
-  } else {
-    return false;
-  }
-}
+
 function convertCoordsToIds(coords) {
   let id = "xy_" + coords;
   if (document.getElementById(id) != undefined) {
     return Number(document.getElementById(id).parentElement.id.slice(6));
   }
 }
-function isValidMovePawn(firstSelection, secondSelection) {
-  let canEat = firstSelection["canEat"].indexOf(secondSelection.id) >= 0,
-    canMove = firstSelection["canMove"].indexOf(secondSelection.id) == 0;
-  if (
-    (canMove && secondSelection.piece == undefined) ||
-    (secondSelection.piece != undefined && canEat)
-  ) {
-    return true;
-  } else if (secondSelection.id) {
-    //(`Figurica ispred`);
-  }
-}
-
 function isValidMoveQueen(firstSelection, secondSelection) {
   //(firstSelection, secondSelection);
   let field1 = convertField(firstSelection.id);
@@ -508,3 +402,20 @@ function updateUi() {
     });
   }
 }
+
+// Todo: (1. Add bishop moves
+//       2. Add queen moves
+//       3. Add king moves)
+//     ## First turn gets two fields of the pawn
+//     ## End game solution
+//     ## Checkmate detection
+//     ## Check detection
+//     ## Swap positions 
+//     ## Return Pawn to beginning
+
+//     *** Add hints?
+//     *** Calculate time?
+//     *** Count Moves
+//     *** Different styling
+//     *** Add SASS
+//     *** Gulp
