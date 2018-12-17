@@ -167,7 +167,7 @@ function checkForObstacles(obj) {
   console.log("tmpArr :",tmpArr);
 }
 
-// Move constructor
+// Figure constructor
 function Figure(id) {
   this.id = id;
   this.color = table[id].color;

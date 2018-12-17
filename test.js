@@ -4,6 +4,8 @@ let selectedPiece = "",
   gameStarted = false,
   numberOfMoves = 0;
 
+let firstSelection, secondSelection; // selection figures init
+
 function calcMoves(ref, type) {
   if (type == "knight") {
     return getKnightMovements(ref);
@@ -14,74 +16,85 @@ function calcMoves(ref, type) {
   if (type == "rook") {
     return getRookMovements(ref);
   }
+  if (type == "bishop") {
+    return getBishopMovements(ref);
+  }
+  if (type == "queen") {
+    return getQueenMovements(ref);
+  }
 }
+
+
 function getRookMovements(obj) {
   let coordArr = obj.fieldCoordinates,
     x = coordArr[0],
     y = coordArr[1],
     tmpArr = [];
-  for (var i = 0; i < 8; i++) {
+  for (let i = 0; i < 8; i++) {
     if (i == x) {
-
       continue;
     }
     tmpArr.push([i, y]);
   }
-  for (var z = 0; z < 8; z++) {
+  for (let z = 0; z < 8; z++) {
     if (z == y) {
       continue;
     }
     tmpArr.push([x, z]);
   }
-
   let movements = getAllPossibleFields(coordArr, tmpArr);
-
-  return checkForObstacles(movements);
+  return checkForFiguresOnPath(movements);
 }
+
+
 function getKnightMovements(obj) {
   let coordArr = obj.fieldCoordinates,
     x = coordArr[0],
     y = coordArr[1],
     tmpArr = [];
-  for (var i = x + 1, b = 0; i < x + 3; i++, b++) {
+  for (let i = x + 1, b = 0; i < x + 3; i++, b++) {
     tmpArr.push([i, y - 2 + b]);
     tmpArr.push([i, y + 2 - b]);
     // b == 1, x == x + 2
   }
-  for (var g = x - 1, z = 0; g > x - 3; g--, z++) {
+  for (let g = x - 1, z = 0; g > x - 3; g--, z++) {
     tmpArr.push([g, y - 2 + z]);
     tmpArr.push([g, y + 2 - z]);
     // g == x - 1
     // g == x - 2
   }
   let movements = getAllPossibleFields(coordArr, tmpArr);
-  console.log(movements);
-  return checkForObstacles(movements);
+  return checkForFiguresOnPath(movements);
 }
+
 
 function getPawnMovements(obj) {
   let coordArr = obj.fieldCoordinates,
     x = coordArr[0],
     y = coordArr[1],
     tmpArr = [];
-  let retObj = {
-    canMove: [],
-    canEat: []
-  };
+  
   if (obj.color == "white") {
-    for (var i = y - 1; i <= y + 1; i++) {
+    for (let i = y - 1; i <= y + 1; i++) {
       tmpArr.push([x - 1, i]);
     }
   } else if (obj.color == "black") {
-    for (var k = y - 1; k <= y + 1; k++) {
+    for (let k = y - 1; k <= y + 1; k++) {
       tmpArr.push([x + 1, k]);
     }
   }
   let movements = getAllPossibleFields(coordArr, tmpArr);
-  //(movements);
-  for (const key in movements) {
-    if (movements.hasOwnProperty(key) && movements[key].length != 0) {
-      let fieldId = convertCoordsToIds(movements[key][0]);
+  return pawnMovementCase(movements);
+}
+function pawnMovementCase(obj){
+    let retObj = {
+        canMove: [],
+        canEat: []
+      };
+      
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key) && obj[key].length != 0) {
+      let fieldId = convertCoordsToIds(obj[key][0]);
       if (table[fieldId] == undefined) {
         continue;
       } else {
@@ -103,6 +116,41 @@ function getPawnMovements(obj) {
   }
 
   return retObj;
+}
+
+
+function getBishopMovements(obj) {
+  let coordArr = obj.fieldCoordinates,
+    x = coordArr[0],
+    y = coordArr[1],
+    tmpArr = [];
+
+  for (let i = x, b = 1; i >= 0 && y - b >= 0; i--, b++) {
+    tmpArr.push([x - b, y - b]);
+  }
+  for (let p = x, g = 1; p >= 0 && y + g <= 7; p--, g++) {
+    tmpArr.push([x - g, y + g]);
+  }
+  for (let i = x, g = 1; i < 8; i++, g++) {
+    tmpArr.push([x + g, y + g]);
+  }
+  for (let i = x, g = 1; i < 8; i++, g++) {
+    tmpArr.push([x + g, y - g]);
+  }
+
+  let movements = getAllPossibleFields(coordArr, tmpArr);
+  return checkForFiguresOnPath(movements);
+}
+
+
+function getQueenMovements(obj) {
+  let rookMoves = getRookMovements(obj);
+  let bishopMoves = getBishopMovements(obj);
+  let queenMoves = {};
+  queenMoves.canMove = rookMoves.canMove.concat(bishopMoves.canMove);
+  queenMoves.canEat = rookMoves.canEat.concat(bishopMoves.canEat);
+
+  return queenMoves;
 }
 
 function getAllPossibleFields(currentcoords, arrOfposibleCoords) {
@@ -160,7 +208,7 @@ function getAllPossibleFields(currentcoords, arrOfposibleCoords) {
     return a[0] - b[0];
   });
   yDBottomRight.sort(function(a, b) {
-    return b[0] - a[0];
+    return a[0] - b[0];
   });
   return {
     xLeft,
@@ -173,15 +221,15 @@ function getAllPossibleFields(currentcoords, arrOfposibleCoords) {
     yDBottomRight
   };
 }
-function checkForObstacles(obj) {
+
+function checkForFiguresOnPath(obj) {
   let tmpArr = {
     canEat: [],
     canMove: []
   };
   for (const key in obj) {
     if (obj.hasOwnProperty(key) && obj[key].length != 0) {
-      //(key);
-      for (var i = 0; i < obj[key].length; i++) {
+      for (let i = 0; i < obj[key].length; i++) {
         let fieldId = convertCoordsToIds(obj[key][i]);
         if (table[fieldId] != undefined) {
           if (
@@ -189,7 +237,9 @@ function checkForObstacles(obj) {
             table[fieldId].piece != undefined
           ) {
             tmpArr.canEat.push(fieldId);
-            break;
+            if (firstSelection.piece != "knight") {
+              break;
+            }
           } else if (table[fieldId].color == playerTurn) {
             if (firstSelection.piece == "knight") {
               continue;
@@ -205,27 +255,6 @@ function checkForObstacles(obj) {
   }
   return tmpArr;
 }
-
-// Move constructor
-function Figure(id) {
-  this.id = id;
-  this.color = table[id].color;
-  this.piece = table[id].piece;
-  this.fieldCoordinates = this.getFieldCoords();
-  this.canMove = [];
-  this.canEat = [];
-}
-
-Figure.prototype.getFieldCoords = function() {
-  return [Math.floor(this.id / 8), this.id % 8];
-};
-Figure.prototype.storePossibleMoves = function() {
-  let availableMoves = calcMoves(this, this.piece)
-  this.canMove = availableMoves.canMove;
-  this.canEat = availableMoves.canEat;
-};
-
-let firstSelection, secondSelection; // selection figures init
 
 function chessTableDraw() {
   let html = '<table id="sahTabla">';
@@ -250,24 +279,19 @@ function chessTableDraw() {
   html += "</table>";
   document.getElementById("chessTable").innerHTML = html;
 }
-
 chessTableDraw(); // game init
-
 function updateCurrentSel(id) {
   chessTableDraw();
   firstSelection = new Figure(id); // first selection init
   firstSelection.storePossibleMoves();
   updateUi();
 }
-
 document
   .getElementById("gameContainer")
   .addEventListener("click", function(event) {
     // To - Do : Make a custom function
     let field = event.target;
     let id = field.id.slice(6);
-    console.log("click");
-
     if (selectedPiece === "") {
       if (!table[id].color || table[id].color != playerTurn) {
         return false;
@@ -275,39 +299,24 @@ document
       selectedPiece = Number(id);
       updateCurrentSel(selectedPiece);
       firstSelection;
-      console.log(firstSelection);
+
     } else {
       if (table[id].color == firstSelection.color) {
         selectedPiece = Number(id);
         updateCurrentSel(selectedPiece);
-        console.log(firstSelection);
 
         return false;
       }
-
       plannedMove = Number(id);
       secondSelection = new Figure(plannedMove); // 2nd field init
-      console.log(
-        "first selection :",
-        firstSelection,
-        "\n",
-        "secon selection :",
-        secondSelection
-      );
-
       if (isValidMove(firstSelection, secondSelection)) {
         // check for valid move then making a switch.
-
         swapPlaces(selectedPiece, plannedMove);
       } else {
         selectedPiece = "";
-
-        delete firstSelection;
-        delete secondSelection;
         chessTableDraw();
       }
     }
-
     if (selectedPiece != "")
       document.getElementById("field_" + id).style.background = "pink";
   });
@@ -319,7 +328,6 @@ function swapPlaces(first, second) {
   numberOfMoves++;
   chessTableDraw();
 }
-
 function isValidMove(firstField, secondField) {
   if (
     firstField === secondField ||
@@ -340,48 +348,25 @@ function moveValidation(firstSelection, secondSelection) {
     ) {
       return true;
     } else {
-        return false;
+      return false;
     }
   } else {
     if (canMove || canEat) {
-        return true;
-      } else {
-        return false;
-      }
+      return true;
+    } else {
+      return false;
+    }
   }
-  
 }
-function isValidMoveBishop(firstSelection, secondSelection) {
-  let field1 = convertField(firstSelection.id);
-  let field2 = convertField(secondSelection.id);
-
-  return (
-    field1[0] - field2[0] == field1[1] - field2[1] ||
-    field1[0] - field2[0] == field2[1] - field1[1]
-  );
-}
-
 function convertCoordsToIds(coords) {
   let id = "xy_" + coords;
   if (document.getElementById(id) != undefined) {
     return Number(document.getElementById(id).parentElement.id.slice(6));
   }
 }
-function isValidMoveQueen(firstSelection, secondSelection) {
-  //(firstSelection, secondSelection);
-  let field1 = convertField(firstSelection.id);
-  let field2 = convertField(secondSelection.id);
-
-  return (
-    isValidMoveBishop(firstSelection, secondSelection) ||
-    isValidMoveRook(firstSelection, secondSelection)
-  );
-}
-
 function convertField(id) {
   return [Math.floor(id / 8), id % 8];
 }
-
 function updateUi() {
   let allowedFields = firstSelection.canMove,
     eatingFields = firstSelection.canEat;
@@ -403,14 +388,15 @@ function updateUi() {
   }
 }
 
-// Todo: (1. Add bishop moves
-//       2. Add queen moves
-//       3. Add king moves)
+// Todo: $. Add bishop moves +++
+//       $. Add queen moves +++
+//       $. Add king moves
+
 //     ## First turn gets two fields of the pawn
 //     ## End game solution
 //     ## Checkmate detection
 //     ## Check detection
-//     ## Swap positions 
+//     ## Swap positions
 //     ## Return Pawn to beginning
 
 //     *** Add hints?
@@ -419,3 +405,5 @@ function updateUi() {
 //     *** Different styling
 //     *** Add SASS
 //     *** Gulp
+
+//// // Bug za konja, preskace jedno polje kada treba da jede +++
