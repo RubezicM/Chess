@@ -6,36 +6,23 @@ let selectedPiece = "",
 
 function getAvailableMoves(ref, type) {
   if (type == "knight") {
-    return [
-      [ref.fieldCoordinates[0] + 2, ref.fieldCoordinates[1] + 1],
-      [ref.fieldCoordinates[0] + 2, ref.fieldCoordinates[1] - 1],
-      [ref.fieldCoordinates[0] - 2, ref.fieldCoordinates[1] - 1],
-      [ref.fieldCoordinates[0] - 2, ref.fieldCoordinates[1] + 1],
-      [ref.fieldCoordinates[0] - 1, ref.fieldCoordinates[1] - 2],
-      [ref.fieldCoordinates[0] - 1, ref.fieldCoordinates[1] + 2],
-      [ref.fieldCoordinates[0] + 1, ref.fieldCoordinates[1] + 2],
-      [ref.fieldCoordinates[0] + 1, ref.fieldCoordinates[1] - 2]
-    ];
+    // return [
+    //   [ref.fieldCoordinates[0] + 2, ref.fieldCoordinates[1] + 1],
+    //   [ref.fieldCoordinates[0] + 2, ref.fieldCoordinates[1] - 1],
+    //   [ref.fieldCoordinates[0] - 2, ref.fieldCoordinates[1] - 1],
+    //   [ref.fieldCoordinates[0] - 2, ref.fieldCoordinates[1] + 1],
+    //   [ref.fieldCoordinates[0] - 1, ref.fieldCoordinates[1] - 2],
+    //   [ref.fieldCoordinates[0] - 1, ref.fieldCoordinates[1] + 2],
+    //   [ref.fieldCoordinates[0] + 1, ref.fieldCoordinates[1] + 2],
+    //   [ref.fieldCoordinates[0] + 1, ref.fieldCoordinates[1] - 2]
+    // ];
+    return getKnightMovements(ref);
   }
   if (type == "pawn") {
-    if (ref.color == "white") {
-      return [
-        [ref.fieldCoordinates[0] - 1, ref.fieldCoordinates[1]],
-        [ref.fieldCoordinates[0] - 1, ref.fieldCoordinates[1] - 1],
-        [ref.fieldCoordinates[0] - 1, ref.fieldCoordinates[1] + 1]
-      ];
-    } else if (ref.color == "black") {
-      return [
-        [ref.fieldCoordinates[0] + 1, ref.fieldCoordinates[1]],
-        [ref.fieldCoordinates[0] + 1, ref.fieldCoordinates[1] - 1],
-        [ref.fieldCoordinates[0] + 1, ref.fieldCoordinates[1] + 1]
-      ];
-    }
+    return getPawnMovements(ref);
   }
   if (type == "rook") {
     return getRookMovement(ref);
-
-    // return field1[0] == field2[0] || field1[1] == field2[1];
   }
 }
 function getRookMovement(obj) {
@@ -43,27 +30,102 @@ function getRookMovement(obj) {
     x = coordArr[0],
     y = coordArr[1],
     tmpArr = [];
-  console.log("coordinate,fn rookmovement : ", coordArr);
+  //("coordinate,fn rookmovement : ", coordArr);
 
   for (var i = 0; i < 8; i++) {
     if (i == x) {
-      console.log("same", i, x);
+      //("same", i, x);
       continue;
     }
     tmpArr.push([i, y]);
   }
   for (var z = 0; z < 8; z++) {
     if (z == y) {
-      console.log("same", z, y);
+      //("same", z, y);
       continue;
     }
     tmpArr.push([x, z]);
   }
 
   let movements = getPosibleMovements(coordArr, tmpArr);
-  return checkForObstacles(movements);
 
+  return checkForObstacles(movements);
 }
+function getKnightMovements(obj) {
+  let coordArr = obj.fieldCoordinates,
+    x = coordArr[0],
+    y = coordArr[1],
+    tmpArr = [];
+  //   [ref.fieldCoordinates[0] + 2, ref.fieldCoordinates[1] + 1],
+  //   [ref.fieldCoordinates[0] + 2, ref.fieldCoordinates[1] - 1],
+  //   [ref.fieldCoordinates[0] + 1, ref.fieldCoordinates[1] + 2],
+  //   [ref.fieldCoordinates[0] + 1, ref.fieldCoordinates[1] - 2]
+  //   [ref.fieldCoordinates[0] - 1, ref.fieldCoordinates[1] - 2],
+  //   [ref.fieldCoordinates[0] - 1, ref.fieldCoordinates[1] + 2],
+  //   [ref.fieldCoordinates[0] - 2, ref.fieldCoordinates[1] + 1],
+  //   [ref.fieldCoordinates[0] - 2, ref.fieldCoordinates[1] - 1],
+  for (var i = x + 1, b = 0; i < x + 3; i++, b++) {
+    tmpArr.push([i, y - 2 + b]);
+    tmpArr.push([i, y + 2 - b]);
+    // b == 1, x == x + 2
+  }
+  for (var g = x - 1, z = 0; g > x - 3; g--, z++) {
+    tmpArr.push([g, y - 2 + z]);
+    tmpArr.push([g, y + 2 - z]);
+    // g == x - 1
+    // g == x - 2
+  }
+  let movements = getPosibleMovements(coordArr, tmpArr);
+  console.log(movements);
+  return checkForObstacles(movements);
+}
+
+function getPawnMovements(obj) {
+  let coordArr = obj.fieldCoordinates,
+    x = coordArr[0],
+    y = coordArr[1],
+    tmpArr = [];
+  let retObj = {
+    canMove: [],
+    canEat: []
+  };
+  if (obj.color == "white") {
+    for (var i = y - 1; i <= y + 1; i++) {
+      tmpArr.push([x - 1, i]);
+    }
+  } else if (obj.color == "black") {
+    for (var k = y - 1; k <= y + 1; k++) {
+      tmpArr.push([x + 1, k]);
+    }
+  }
+  let movements = getPosibleMovements(coordArr, tmpArr);
+  //(movements);
+  for (const key in movements) {
+    if (movements.hasOwnProperty(key) && movements[key].length != 0) {
+      let fieldId = convertCoordsToIds(movements[key][0]);
+      if (table[fieldId] == undefined) {
+        continue;
+      } else {
+        if (
+          (key == "yTop" || key == "yBottom") &&
+          table[fieldId].piece == undefined
+        ) {
+          retObj.canMove.push(fieldId);
+        } else if (
+          (key == "yTop" || key == "yBottom") &&
+          table[fieldId].piece != undefined
+        ) {
+          continue;
+        } else {
+          retObj.canEat.push(fieldId);
+        }
+      }
+    }
+  }
+
+  return retObj;
+}
+
 function getPosibleMovements(currentcoords, arrOfposibleCoords) {
   let xLeft,
     xRight,
@@ -115,7 +177,13 @@ function getPosibleMovements(currentcoords, arrOfposibleCoords) {
   yDTopRight.sort(function(a, b) {
     return b[0] - a[0];
   });
-  // console.log(
+  yDBottomLeft.sort(function(a, b) {
+    return a[0] - b[0];
+  });
+  yDBottomRight.sort(function(a, b) {
+    return b[0] - a[0];
+  });
+  // //(
   //   "xleft sorted : ",
   //   xLeft,
   //   "\n",
@@ -140,31 +208,42 @@ function getPosibleMovements(currentcoords, arrOfposibleCoords) {
     yTop,
     yBottom,
     yDTopLeft,
-    yDTopRight
+    yDTopRight,
+    yDBottomLeft,
+    yDBottomRight
   };
 }
 function checkForObstacles(obj) {
   let tmpArr = {
-    canEat:[],
-    canMove:[]
+    canEat: [],
+    canMove: []
   };
-      
   for (const key in obj) {
     if (obj.hasOwnProperty(key) && obj[key].length != 0) {
+      //(key);
       for (var i = 0; i < obj[key].length; i++) {
         let fieldId = convertCoordsToIds(obj[key][i]);
-        if (table[fieldId].color != playerTurn && table[fieldId].piece != undefined) {
-          tmpArr.canEat.push(fieldId);
-          break;
-        }else if(table[fieldId].color == playerTurn) {
-          break;
-        } else {
-          tmpArr.canMove.push(fieldId);
+        if (table[fieldId] != undefined) {
+          if (
+            table[fieldId].color != playerTurn &&
+            table[fieldId].piece != undefined
+          ) {
+            tmpArr.canEat.push(fieldId);
+            break;
+          } else if (table[fieldId].color == playerTurn) {
+            if (firstSelection.piece == "knight") {
+              continue;
+            } else {
+              break;
+            }
+          } else {
+            tmpArr.canMove.push(fieldId);
+          }
         }
       }
     }
   }
-  console.log("tmpArr :",tmpArr);
+  return tmpArr;
 }
 
 // Move constructor
@@ -183,27 +262,31 @@ Figure.prototype.getFieldCoords = function() {
 Figure.prototype.storePossibleMoves = function() {
   let availableMoves = getAvailableMoves(this, this.piece),
     piece = this.piece;
-  availableMoves.forEach(function(coord) {
-    var currentCoord = convertCoordsToIds(coord);
-    if (currentCoord != undefined) {
-      if (piece == "pawn") {
-        // Special case for pawn when eating and such
-        // To - Do : Add two steps when the player has the first move
-        if (firstSelection.fieldCoordinates[1] == coord[1]) {
-          firstSelection.canMove.push(currentCoord);
-        } else {
-          firstSelection.canEat.push(currentCoord);
-        }
-      } else {
-        // All other "normal" pieces
-        if (table[currentCoord].piece == undefined) {
-          firstSelection.canMove.push(currentCoord);
-        } else {
-          firstSelection.canEat.push(currentCoord);
-        }
-      }
-    }
-  });
+  ////(piece,availableMoves,this.canEat,this.canMove);
+  this.canMove = availableMoves.canMove;
+  this.canEat = availableMoves.canEat;
+  //(piece,availableMoves,this.canEat,this.canMove);
+  //   availableMoves.forEach(function(coord) {
+  //     var currentCoord = convertCoordsToIds(coord);
+  //     if (currentCoord != undefined) {
+  //       if (piece == "pawn") {
+  //         // Special case for pawn when eating and such
+  //         // To - Do : Add two steps when the player has the first move
+  //         if (firstSelection.fieldCoordinates[1] == coord[1]) {
+  //           firstSelection.canMove.push(currentCoord);
+  //         } else {
+  //           firstSelection.canEat.push(currentCoord);
+  //         }
+  //       } else {
+  //         // All other "normal" pieces
+  //         if (table[currentCoord].piece == undefined) {
+  //           firstSelection.canMove.push(currentCoord);
+  //         } else {
+  //           firstSelection.canEat.push(currentCoord);
+  //         }
+  //       }
+  //     }
+  //   });
 };
 
 let firstSelection, secondSelection;
@@ -246,25 +329,35 @@ document
     // To - Do : Make a custom function
     let field = event.target;
     let id = field.id.slice(6);
+    console.log("click");
 
-    if (selectedPiece == "") {
+    if (selectedPiece === "") {
       if (!table[id].color || table[id].color != playerTurn) {
         return false;
       }
       selectedPiece = Number(id);
       updateCurrentSel(selectedPiece);
+      firstSelection;
       console.log(firstSelection);
     } else {
       if (table[id].color == firstSelection.color) {
         selectedPiece = Number(id);
         updateCurrentSel(selectedPiece);
         console.log(firstSelection);
+
         return false;
       }
+      //('kme');
 
       plannedMove = Number(id);
       secondSelection = new Figure(plannedMove); // 2nd field init
-      console.log(secondSelection);
+      console.log(
+        "first selection :",
+        firstSelection,
+        "\n",
+        "secon selection :",
+        secondSelection
+      );
 
       if (isValidMove(firstSelection, secondSelection)) {
         // check for valid move then making a switch.
@@ -272,7 +365,7 @@ document
         moveFigure(selectedPiece, plannedMove);
       } else {
         selectedPiece = "";
-        console.log("Invalid move");
+        //("Invalid move");
         delete firstSelection;
         delete secondSelection;
         chessTableDraw();
@@ -289,23 +382,10 @@ function moveFigure(first, second) {
   playerTurn = playerTurn == "white" ? "black" : "white";
   numberOfMoves++;
   chessTableDraw();
-  console.log("field Changed");
+  //("field Changed");
 }
 
 function isValidMove(firstField, secondField) {
-  // console.log(
-  //   "First Selection: ",
-  //   firstField,
-  //   table[firstField],
-  //   "\n",
-  //   "Second Selection: ",
-  //   secondField,
-  //   table[secondField],
-  //   "ACTIVE PLAYER :",
-  //   playerTurn,
-  //   firstField.color == playerTurn
-  // );
-
   if (
     firstField === secondField ||
     firstField.color == secondField.color ||
@@ -313,26 +393,47 @@ function isValidMove(firstField, secondField) {
   ) {
     return false;
   }
-
-  if (table[firstField.id].piece == "rook") {
-    return isValidMoveRook(firstField, secondField);
-  } else if (table[firstField.id].piece == "bishop") {
-    return isValidMoveBishop(firstField, secondField);
-  } else if (table[firstField.id].piece == "knight") {
-    return isValidMoveKnight(firstField, secondField);
-  } else if (table[firstField.id].piece == "pawn") {
-    return isValidMovePawn(firstField, secondField);
-  } else if (table[firstField.id].piece == "queen") {
-    return isValidMoveQueen(firstField, secondField);
+  return moveValidation(firstField, secondField);
+}
+function moveValidation(firstSelection, secondSelection) {
+  let canMove = firstSelection["canMove"].indexOf(secondSelection.id) >= 0,
+    canEat = firstSelection["canEat"].indexOf(secondSelection.id) >= 0;
+  if (firstSelection.piece == "pawn") {
+    if (
+      (canMove && secondSelection.piece == undefined) ||
+      (secondSelection.piece != undefined && canEat)
+    ) {
+      return true;
+    } else {
+        return false;
+    }
+  } else {
+    if (canMove || canEat) {
+        //('moze');
+        return true;
+      } else {
+        //('ne moze');
+    
+        return false;
+      }
   }
-  return false;
+  
 }
 
 function isValidMoveRook(firstSelection, secondSelection) {
-  let field1 = convertField(firstSelection.id);
-  let field2 = convertField(secondSelection.id);
+  //(firstSelection.piece);
 
-  return field1[0] == field2[0] || field1[1] == field2[1];
+  let canMove = firstSelection["canMove"].indexOf(secondSelection.id) >= 0,
+    canEat = firstSelection["canEat"].indexOf(secondSelection.id) >= 0;
+
+  if (canMove || canEat) {
+    //('moze');
+    return true;
+  } else {
+    //('ne moze');
+
+    return false;
+  }
 }
 
 function isValidMoveBishop(firstSelection, secondSelection) {
@@ -368,12 +469,12 @@ function isValidMovePawn(firstSelection, secondSelection) {
   ) {
     return true;
   } else if (secondSelection.id) {
-    console.log(`Figurica ispred`);
+    //(`Figurica ispred`);
   }
 }
 
 function isValidMoveQueen(firstSelection, secondSelection) {
-  console.log(firstSelection, secondSelection);
+  //(firstSelection, secondSelection);
   let field1 = convertField(firstSelection.id);
   let field2 = convertField(secondSelection.id);
 
