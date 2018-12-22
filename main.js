@@ -1,8 +1,9 @@
 let selectedPiece = "",
-  plannedMove = "",
-  playerTurn = "white",
-  gameStarted = false,
-  numberOfMoves = 0;
+    plannedMove = "",
+    playerTurn = "white",
+    gameStarted = false,
+    numberOfMoves = 0,
+    usedFigures = [];
 
 let firstSelection, secondSelection; // selection figures init
 
@@ -83,7 +84,11 @@ function getPawnMovements(obj) {
       tmpArr.push([x + 1, k]);
     }
   }
+  console.log(obj,tmpArr);
+  
   let movements = getAllPossibleFields(coordArr, tmpArr);
+  console.log(movements);
+  
   return pawnMovementCase(movements);
 }
 function pawnMovementCase(obj){
@@ -93,7 +98,9 @@ function pawnMovementCase(obj){
       };
       
   for (const key in obj) {
-    if (obj.hasOwnProperty(key) && obj[key].length != 0) {
+    console.log(obj[key],key);
+    
+    if (obj[key].length != 0) {
       let fieldId = convertCoordsToIds(obj[key][0]);
       if (table[fieldId] == undefined) {
         continue;
@@ -117,7 +124,34 @@ function pawnMovementCase(obj){
 
   return retObj;
 }
+// function pawnMovementCase(obj){
+//   let retObj = {
+//       canMove: [],
+//       canEat: []
+//     };
+    
+// for (const key in obj) {
+//   //console.log(obj[key],key);
+  
+//   if (obj[key].length != 0) {
+//     let fieldId = convertCoordsToIds(obj[key][0]);
+//     if (table[fieldId] == undefined) {
+//       continue;
+//     } else {
+//       console.log(obj[key]);
+      
+//       if(key == "yTop"){
+//         if(obj[key][1][0] == 4){
 
+//         }
+        
+//       }
+//     }
+//   }
+// }
+
+// return retObj;
+// }
 
 function getBishopMovements(obj) {
   let coordArr = obj.fieldCoordinates,
@@ -312,6 +346,9 @@ document
       if (isValidMove(firstSelection, secondSelection)) {
         // check for valid move then making a switch.
         swapPlaces(selectedPiece, plannedMove);
+        usedFigures.push(firstSelection);
+        console.log(usedFigures);
+        
       } else {
         selectedPiece = "";
         chessTableDraw();

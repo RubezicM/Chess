@@ -1,4 +1,5 @@
 // Move constructor
+
 function Figure(id) {
     this.id = id;
     this.color = table[id].color;
@@ -6,6 +7,7 @@ function Figure(id) {
     this.fieldCoordinates = this.getFieldCoords();
     this.canMove = [];
     this.canEat = [];
+    this.numberOfMoves = 0;
   }
   
   Figure.prototype.getFieldCoords = function() {
